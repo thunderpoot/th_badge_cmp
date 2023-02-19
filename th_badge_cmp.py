@@ -26,17 +26,18 @@ def get_difference(user_a, user_b, set_b, set_a):
     missing_badges = sorted(list(set(set_a) - set(set_b)))
     out = ''
     thisthese = 'this'
-    if len(missing_badges) > 1:
+    count = len(missing_badges)
+    if count > 1:
         thisthese = 'these'
     if missing_badges:
-        badges = f"{thisthese} {len(missing_badges)} badges"
+        badges = f"{thisthese} {count} badge{'s'*(count>1)}"
         out = f"[+] {user_a} is missing {badges} that {user_b} has:\n  "
         out += ",\n  ".join(missing_badges)
     return out
 
 
 def delta_time(delta):
-    '''Calculate time differential'''
+    '''Calculate time differential, returns a formatted string'''
     if ( delta + 0.5 ) < 60:
         return f"{int(delta+0.5)} seconds"
     if ( delta/60+0.5) < 60:
@@ -58,11 +59,15 @@ def user_delta(username,badges):
 
 
 def main(args):
-    '''Main function, takes command-line arguments, returns formatted string'''
+    '''Main function, takes command-line arguments, invokes pager to display output'''
     out = ''
 
     user1 = args[1].upper()
     user2 = args[2].upper()
+
+    if user1 == user2:
+        print(f"Error: cannot compare {args[1]} with {args[2]}.")
+        sys.exit(1)
 
     user1_badges, err = get_badges(user1)
     if err == 404:
@@ -85,7 +90,7 @@ def main(args):
     len2 = len(user2_badges)
 
     hdr_message = f"{user1} ({len1}) vs {user2} ({len2})"
-    out += f"\n{hdr_message}\n"
+    out += f"{hdr_message}\n"
     out += ( "=" * len(hdr_message) ) + "\n\n"
 
     out += user_delta(user1,user1_badges)
