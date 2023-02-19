@@ -1,35 +1,32 @@
 #!/usr/bin/env python3
 
+print("Starting the script...")
+
 import requests
 import sys
 import json
 
 def get_status_page(username):
-    # get a list with the lines of the user page
     url = "http://telehack.com/u/" + username + ".json"
     r = requests.get(url)
     if r.status_code != 200:
         return ([username], r.status_code)
     page_data = json.loads(r.text)
-    page_lines = [line.strip() for line in page_data['status'].split("<br/>")]
-    return (page_lines, 0)
+    badges = [badge for badge, obtained in page_data.items() if obtained is True]
+    print(f"URL: {url}")
+    print(f"Response text: {r.text}")
+    return (badges, 0)
 
-def get_badges(page):
-    # find the start of the badges
-    try:
-        badges_start = page.index("badge bitfield:") + 1
-    except ValueError:
-        return []
-    badges_end = badges_start + page[badges_start:].index("")  # badges end when there is an empty line
-
-    # badges are in the form `XXX - badge name`
-    return [line[6:].strip() for line in page[badges_start:badges_end] if line.strip()]
 
 def main(args):
     user1 = args[1].upper()
     user2 = args[2].upper()
 
-    user1_page, err = get_status_page(user1)
+    print(f"User1: {user1}")
+    print(f"User2: {user2}")
+
+    user1_badges, err = get_status_page(user1)
+    print (user1_badges)
     if err == 404:
         print(f"{err}: user {user1} not found.")
         sys.exit(err)
@@ -37,7 +34,7 @@ def main(args):
         print(f"{user1}: {err}")
         sys.exit(err)
 
-    user2_page, err = get_status_page(user2)
+    user2_badges, err = get_status_page(user2)
     if err == 404:
         print(f"{err}: user {user2} not found.")
         sys.exit(err)
@@ -45,13 +42,13 @@ def main(args):
         print(f"{user2}: {err}")
         sys.exit(err)
 
-    user1_badges = get_badges(user1_page)
-    user2_badges = get_badges(user2_page)
-
     # badge count for each user
     hdr_message = f"{user1} ({len(user1_badges)}) vs {user2} ({len(user2_badges)})"
     print("\n" + hdr_message)
     print("-" * len(hdr_message))
+
+    print(f"{user1} badges: {user1_badges}")
+    print(f"{user2} badges: {user2_badges}")
 
     # badges users have in common
     common_badges = list(set(user1_badges) & set(user2_badges))
@@ -76,8 +73,8 @@ def main(args):
     else:
         print("None.")
 
-    print("")
-
+    print ("")
+    print("Script has finished.")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
