@@ -1,37 +1,70 @@
 #!/usr/bin/env python3
 
-import requests
+'''Compare badges of two Telehack users'''
+
+from datetime import datetime
+import time
 import sys
-from bs4 import BeautifulSoup as bs
+import json
+import pydoc
+import requests
 
-def get_status_page(username):
-    # get a list with the lines of the user page
-    url = "http://telehack.com/u/" + username
-    r = requests.get(url)
-    if r.status_code != 200:
-        return ([username], r.status_code)
-    soup = bs(r.text, features="lxml")
-    pre = soup.pre
-    pretext = str(pre)
-    page_lines = [line.strip() for line in pretext.split("<br/>")]
-    return (page_lines, 0)
 
-def get_badges(page):
-    badges = []
-    badges_start = page.index("user status bits:")+1
-    badges_end = page.index("")
-    for badge in page[badges_start:]:
-        badge = badge.split(" ")[0]
-        if badge:
-            badges.append(badge)
-        else:
-            return badges
+def get_badges(username):
+    '''Get user badges, returns a dictionary and response status'''
+    url = "http://telehack.com/u/" + username + ".json"
+    response = requests.get(url)
+    if response.status_code != 200:
+        return ({}, response.status_code)
+    page_data = json.loads(response.text)
+    badges = page_data.get('badges')
+    return (badges, 0)
+
+
+def get_difference(user_a, user_b, set_b, set_a):
+    '''Get difference between user_a and user_b, returns a formatted string'''
+    missing_badges = sorted(list(set(set_a) - set(set_b)))
+    out = ''
+    thisthese = 'this'
+    if len(missing_badges) > 1:
+        thisthese = 'these'
+    if missing_badges:
+        badges = f"{thisthese} {len(missing_badges)} badges"
+        out = f"[+] {user_a} is missing {badges} that {user_b} has:\n  "
+        out += ",\n  ".join(missing_badges)
+    return out
+
+
+def delta_time(delta):
+    '''Calculate time differential'''
+    if ( delta + 0.5 ) < 60:
+        return f"{int(delta+0.5)} seconds"
+    if ( delta/60+0.5) < 60:
+        return f"{int(delta/60+0.5)} minutes"
+    if ( delta/3600+0.5) < 24:
+        return f"{int(delta/3600+0.5)} hours"
+    if ( delta/86400+0.5) < 365:
+        return f"{int(delta/86400+0.5)} days"
+    return f"{int(delta/31536000)} years"
+
+
+def user_delta(username,badges):
+    '''Return formatted string of when user created account'''
+    user_epoch = badges.get( 'ACCT' )
+    user_since = datetime.utcfromtimestamp(user_epoch).strftime('%Y-%m-%d %H:%M:%S')
+    now = time.time()
+    user_deltatime = delta_time(now-user_epoch)
+    return f"{username: <9} (user since {user_since}, {user_deltatime})\n"
+
 
 def main(args):
+    '''Main function, takes command-line arguments, returns formatted string'''
+    out = ''
+
     user1 = args[1].upper()
     user2 = args[2].upper()
 
-    user1_page, err = get_status_page(user1)
+    user1_badges, err = get_badges(user1)
     if err == 404:
         print(f"{err}: user {user1} not found.")
         sys.exit(err)
@@ -39,7 +72,7 @@ def main(args):
         print(f"{user1}: {err}")
         sys.exit(err)
 
-    user2_page, err = get_status_page(user2)
+    user2_badges, err = get_badges(user2)
     if err == 404:
         print(f"{err}: user {user2} not found.")
         sys.exit(err)
@@ -47,42 +80,41 @@ def main(args):
         print(f"{user2}: {err}")
         sys.exit(err)
 
-    user1_badges = get_badges(user1_page)
-    user2_badges = get_badges(user2_page)
+    # Badge count for each user
+    len1 = len(user1_badges)
+    len2 = len(user2_badges)
 
-    # badge count for each user
-    hdr_message = f"{user1} ({len(user1_badges)}) vs {user2} ({len(user2_badges)})"
-    print("\n" + hdr_message)
-    print("-" * len(hdr_message))
+    hdr_message = f"{user1} ({len1}) vs {user2} ({len2})"
+    out += f"\n{hdr_message}\n"
+    out += ( "=" * len(hdr_message) ) + "\n\n"
 
-    # badges users have in common
+    out += user_delta(user1,user1_badges)
+    out += user_delta(user2,user2_badges)
+
+    # Badges users have in common
     common_badges = list(set(user1_badges) & set(user2_badges))
-    print(f"\n[+] Both users have this {len(common_badges)} badges:\n")
-    print(", ".join(sorted(common_badges)))
+    thisthese = 'this'
+    count = len(common_badges)
+    if count > 1:
+        thisthese = 'these'
+    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n  "
+    out += ",\n  ".join(sorted(common_badges)) + "\n\n"
 
-    # badges only user2 have
-    badges1 = sorted(list(set(user2_badges) - set(user1_badges)))
-    print(f"\n[+] {user1} is missing this {len(badges1)} badges that {user2} already have:\n")
+    diff1 = get_difference(user1, user2, user1_badges, user2_badges)
+    diff2 = get_difference(user2, user1, user2_badges, user1_badges)
 
-    if badges1:
-        print(", ".join(badges1))
+    if diff1 != '' and diff2 != '':
+        out += f"{diff1}\n\n{diff2}\n"
     else:
-        print("None.")
+        out += f"{user1} and {user2} have the same badges\n"
 
-    # badges only user1 have
-    badges2 = sorted(list(set(user1_badges) - set(user2_badges)))
-    print(f"\n[+] {user2} is missing this {len(badges2)} badges that {user1} already have:\n")
-    
-    if badges2:
-        print(", ".join(badges2))
-    else:
-        print("None.")
-    
-    print("")
+    out += "\nEnd of report"
+    pydoc.pager(out)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) != 3:
         print(f"  Usage: {sys.argv[0]} <user1> <user2>\n")
         sys.exit(1)
+
     main(sys.argv)
