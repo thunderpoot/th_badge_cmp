@@ -1,12 +1,15 @@
-# th_badge_cmp
-Compare the badges of two telehack.com users
+![Telehack](https://telehack.com/telehack.svg)
+![CLI](https://telehack.com/cmd.svg)
 
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+
+## th_badge_cmp
+
+Simple script to compare badges for two Telehack users.  Uses `/u/username.json` API.
+
+Originally by [**drsleepy**](https://telehack.com/u/drsleepy) and [**pbernicc**](https://telehack.com/u/pbernicc)
+
+### Usage:
 ```
-Usage:
-  $ chmod +x th_badge_cmp.py
   $ ./th_badge_cmp.py <user1> <user2>
 ```
-
-![Example 1](https://github.com/drsleepy1/th_badge_cmp/blob/master/th_badge_cmp1.png "example 1").
-
-![Example 2](https://github.com/drsleepy1/th_badge_cmp/blob/master/th_badge_cmp2.png "example 2").
