@@ -17,10 +17,10 @@ def get_badges(username):
     if response.status_code != 200:
         err = response.status_code
         if err == 404:
-            print(f"{err}: user {user1} not found.")
+            print(f"{err}: user {username} not found.")
             sys.exit(1)
         elif err:
-            print(f"{user1}: {err}")
+            print(f"{username}: {err}")
             sys.exit(1)
 
     page_data = json.loads(response.text)
@@ -44,20 +44,22 @@ def get_difference(user_a, user_b, set_b, set_a):
 
 def delta_time(delta):
     '''Calculate time differential, returns a formatted string'''
-    sec = delta+0.5
-    min = delta/60+0.5
-    hrs = delta/3600+0.5
-    day = delta/86400+0.5
-    yrs = delta/31536000
-    if sec < 60:
-        return f"{int(sec)} seconds"
-    if min < 60:
-        return f"{int(min)} minutes"
-    if hrs < 24:
-        return f"{int(hrs)} hours"
-    if day < 365:
-        return f"{int(day)} days"
-    return f"{int(yrs)} years"
+    seconds = delta+0.5
+    minutes = delta/60+0.5
+    hours   = delta/3600+0.5
+    days    = delta/86400+0.5
+    years   = delta/31536000
+
+    if seconds < 60:
+        return f"{int(seconds)} seconds"
+    if minutes < 60:
+        return f"{int(minutes)} minutes"
+    if hours < 24:
+        return f"{int(hours)} hours"
+    if days < 365:
+        return f"{int(days)} days"
+
+    return f"{int(years)} years"
 
 
 def user_delta(username,badges):
