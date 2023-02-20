@@ -15,10 +15,16 @@ def get_badges(username):
     url = "http://telehack.com/u/" + username + ".json"
     response = requests.get(url)
     if response.status_code != 200:
-        return ({}, response.status_code)
+        err = response.status_code
+        if err == 404:
+            print(f"{err}: user {user1} not found.")
+            sys.exit(1)
+        elif err:
+            print(f"{user1}: {err}")
+            sys.exit(1)
+
     page_data = json.loads(response.text)
-    badges = page_data.get('badges')
-    return (badges, 0)
+    return page_data.get('badges')
 
 
 def get_difference(user_a, user_b, set_b, set_a):
@@ -38,15 +44,20 @@ def get_difference(user_a, user_b, set_b, set_a):
 
 def delta_time(delta):
     '''Calculate time differential, returns a formatted string'''
-    if ( delta + 0.5 ) < 60:
-        return f"{int(delta+0.5)} seconds"
-    if ( delta/60+0.5) < 60:
-        return f"{int(delta/60+0.5)} minutes"
-    if ( delta/3600+0.5) < 24:
-        return f"{int(delta/3600+0.5)} hours"
-    if ( delta/86400+0.5) < 365:
-        return f"{int(delta/86400+0.5)} days"
-    return f"{int(delta/31536000)} years"
+    sec = delta+0.5
+    min = delta/60+0.5
+    hrs = delta/3600+0.5
+    day = delta/86400+0.5
+    yrs = delta/31536000
+    if sec < 60:
+        return f"{int(sec)} seconds"
+    if min < 60:
+        return f"{int(min)} minutes"
+    if hrs < 24:
+        return f"{int(hrs)} hours"
+    if day < 365:
+        return f"{int(day)} days"
+    return f"{int(yrs)} years"
 
 
 def user_delta(username,badges):
@@ -60,8 +71,6 @@ def user_delta(username,badges):
 
 def main(args):
     '''Main function, takes command-line arguments, invokes pager to display output'''
-    out = ''
-
     user1 = args[1].upper()
     user2 = args[2].upper()
 
@@ -69,30 +78,18 @@ def main(args):
         print(f"Error: cannot compare {args[1]} with {args[2]}.")
         sys.exit(1)
 
-    user1_badges, err = get_badges(user1)
-    if err == 404:
-        print(f"{err}: user {user1} not found.")
-        sys.exit(err)
-    elif err:
-        print(f"{user1}: {err}")
-        sys.exit(err)
-
-    user2_badges, err = get_badges(user2)
-    if err == 404:
-        print(f"{err}: user {user2} not found.")
-        sys.exit(err)
-    elif err:
-        print(f"{user2}: {err}")
-        sys.exit(err)
+    user1_badges = get_badges(user1)
+    user2_badges = get_badges(user2)
 
     # Badge count for each user
     len1 = len(user1_badges)
     len2 = len(user2_badges)
 
     hdr_message = f"{user1} ({len1}) vs {user2} ({len2})"
+
+    out = ''
     out += f"{hdr_message}\n"
     out += ( "=" * len(hdr_message) ) + "\n\n"
-
     out += user_delta(user1,user1_badges)
     out += user_delta(user2,user2_badges)
 
