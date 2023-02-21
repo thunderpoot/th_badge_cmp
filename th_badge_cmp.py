@@ -9,6 +9,11 @@ import json
 import pydoc
 import requests
 
+green = "\033[32m"
+cyan = "\033[36m"
+red = "\033[31m"
+reset = "\033[0m"
+
 
 def get_badges(username):
     '''Get user badges, returns a dictionary and response status'''
@@ -26,12 +31,13 @@ def get_difference(user_a, user_b, set_b, set_a):
     missing_badges = sorted(list(set(set_a) - set(set_b)))
     out = ''
     thisthese = 'this'
+    count = len(missing_badges)    
     if len(missing_badges) > 1:
         thisthese = 'these'
     if missing_badges:
-        badges = f"{thisthese} {len(missing_badges)} badges"
-        out = f"[+] {user_a} is missing {badges} that {user_b} has:\n  "
-        out += ",\n  ".join(missing_badges)
+        badges = f"{thisthese} {len(missing_badges)} badge{'s'*(count>1)}"
+        out = f"[+] {user_a} is missing {badges} that {user_b} has:\n {red} "
+        out += " ".join(missing_badges)
     return out
 
 
@@ -97,8 +103,8 @@ def main(args):
     count = len(common_badges)
     if count > 1:
         thisthese = 'these'
-    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n  "
-    out += ",\n  ".join(sorted(common_badges)) + "\n\n"
+    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n {cyan} "
+    out += " ".join(sorted(common_badges)) + "\n\n"
 
     diff1 = get_difference(user1, user2, user1_badges, user2_badges)
     diff2 = get_difference(user2, user1, user2_badges, user1_badges)
@@ -110,7 +116,6 @@ def main(args):
 
     out += "\nEnd of report"
     pydoc.pager(out)
-
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
