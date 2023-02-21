@@ -107,7 +107,7 @@ def main(args):
     count = len(common_badges)
     if count > 1:
         thisthese = 'these'
-    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n {CYAN}"
+    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n{CYAN}"
     out += " ".join(sorted(common_badges)) + "\n\n"
     out += f"{RESET}"
 
