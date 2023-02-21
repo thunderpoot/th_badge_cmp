@@ -10,6 +10,11 @@ import pydoc
 import requests
 
 
+CYAN = "\033[36m"
+RED = "\033[31m"
+RESET = "\033[m"
+
+
 def get_badges(username):
     '''Get user badges, returns a dictionary and response status'''
     url = "http://telehack.com/u/" + username + ".json"
@@ -37,8 +42,9 @@ def get_difference(user_a, user_b, set_b, set_a):
         thisthese = 'these'
     if missing_badges:
         badges = f"{thisthese} {count} badge{'s'*(count>1)}"
-        out = f"[+] {user_a} is missing {badges} that {user_b} has:\n  "
-        out += ",\n  ".join(missing_badges)
+        out = f"[+] {user_a} is missing {badges} that {user_b} has:\n{RED}"
+        out += " ".join(missing_badges)
+        out += f"{RESET}"
     return out
 
 
@@ -101,8 +107,9 @@ def main(args):
     count = len(common_badges)
     if count > 1:
         thisthese = 'these'
-    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n  "
-    out += ",\n  ".join(sorted(common_badges)) + "\n\n"
+    out += f"\n[+] Both users have {thisthese} {count} badge{'s'*(count>1)}:\n {CYAN}"
+    out += " ".join(sorted(common_badges)) + "\n\n"
+    out += f"{RESET}"
 
     diff1 = get_difference(user1, user2, user1_badges, user2_badges)
     diff2 = get_difference(user2, user1, user2_badges, user1_badges)
@@ -113,7 +120,7 @@ def main(args):
         out += f"{user1} and {user2} have the same badges\n"
 
     out += "\nEnd of report"
-    pydoc.pager(out)
+    pydoc.pipepager(out, cmd='less -R')
 
 
 if __name__ == "__main__":
